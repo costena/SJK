@@ -1,0 +1,9 @@
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\bin\Debug\netstandard2.0\SJK.deps.json
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\bin\Debug\netstandard2.0\SJK.dll
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.csprojAssemblyReference.cache
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.AssemblyInfoInputs.cache
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.AssemblyInfo.cs
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\bin\Debug\netstandard2.0\SJK.pdb
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.dll
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.pdb
+C:\Users\Ziqi Cheng\source\repos\SJK\SJK\obj\Debug\netstandard2.0\SJK.csproj.CoreCompileInputs.cache
