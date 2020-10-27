@@ -13,29 +13,34 @@ using MySqlX.XDevAPI.Relational;
 
 namespace SJK
 {
-    public static class Session
+    public class Session
     {
-        private static MySqlConnection connection;
+        private MySqlConnection connection;
         #region public methods
-        public static void Connect(string connectionString)
+        public void Connect(string connectionString)
         {
             connection = new MySqlConnection(connectionString);
             connection.Open();
         }
-        public static async Task ConnectAsync(string connectionString)
+        public async Task ConnectAsync(string connectionString)
         {
             connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
         }
 
-        private static void CheckConnect()
+        public void Disconnect()
+        {
+            connection.Close();
+        }
+
+        private void CheckConnect()
         {
             if (connection.State != System.Data.ConnectionState.Open)
             {
                 connection.Open();
             }
         }
-        private static async Task CheckConnectAsync()
+        private async Task CheckConnectAsync()
         {
             if (connection.State != System.Data.ConnectionState.Open)
             {
@@ -43,7 +48,7 @@ namespace SJK
             }
         }
         
-        public static void Insert<T>(T record)
+        public void Insert<T>(T record)
         {
             CheckConnect();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -76,7 +81,7 @@ namespace SJK
                 reader.Close();
             }
         }
-        public static async Task InsertAsync<T>(T record)
+        public async Task InsertAsync<T>(T record)
         {
             await CheckConnectAsync();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -110,7 +115,7 @@ namespace SJK
             }
         }
 
-        public static int Delete<T>(T record)
+        public int Delete<T>(T record)
         {
             CheckConnect();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -123,7 +128,7 @@ namespace SJK
             MySqlCommand sql = new MySqlCommand($"DELETE FROM `{table.TableName}` WHERE {string.Join(" AND ", conditions)}", connection);
             return sql.ExecuteNonQuery();
         }
-        public static async Task<int> DeleteAsync<T>(T record)
+        public async Task<int> DeleteAsync<T>(T record)
         {
             await CheckConnectAsync();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -137,7 +142,7 @@ namespace SJK
             return await sql.ExecuteNonQueryAsync();
         }
 
-        public static int Update<T>(T record)
+        public int Update<T>(T record)
         {
             CheckConnect();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -158,7 +163,7 @@ namespace SJK
             MySqlCommand sql = new MySqlCommand($"UPDATE `{table.TableName}` SET {string.Join(", ", sets)} WHERE {string.Join(" AND ", conditions)}", connection);
             return sql.ExecuteNonQuery();
         }
-        public static async Task<int> UpdateAsync<T>(T record)
+        public async Task<int> UpdateAsync<T>(T record)
         {
             await CheckConnectAsync();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -180,7 +185,7 @@ namespace SJK
             return await sql.ExecuteNonQueryAsync();
         }
 
-        public static IEnumerable<T> Find<T>(params Condition[] conditions)
+        public IEnumerable<T> Find<T>(params Condition[] conditions)
         {
             CheckConnect();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -191,19 +196,25 @@ namespace SJK
             }
             MySqlCommand sql = new MySqlCommand($"SELECT * FROM `{table.TableName}` WHERE {string.Join(" AND ", conditionStrings)}", connection);
             MySqlDataReader reader = sql.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                T t = Activator.CreateInstance<T>();
-                var keyValues = GetKeyValues(t);
-                foreach(var keyValue in keyValues)
+                while (reader.Read())
                 {
-                    keyValue.Value.SetValue(t, reader[keyValue.Key.KeyName]);
+                    T t = Activator.CreateInstance<T>();
+                    var keyValues = GetKeyValues(t);
+                    foreach (var keyValue in keyValues)
+                    {
+                        keyValue.Value.SetValue(t, reader[keyValue.Key.KeyName]);
+                    }
+                    yield return t;
                 }
-                yield return t;
             }
-            reader.Close();
+            finally
+            {
+                reader.Close();
+            }
         }
-        public static async Task<List<T>> FindAsync<T>(params Condition[] conditions)
+        public async Task<List<T>> FindAsync<T>(params Condition[] conditions)
         {
             await CheckConnectAsync();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -229,7 +240,7 @@ namespace SJK
             return result;
         }
 
-        public static T FindFirst<T>(params Condition[] conditions) where T : class
+        public T FindFirst<T>(params Condition[] conditions) where T : class
         {
             CheckConnect();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -254,7 +265,7 @@ namespace SJK
             reader.Close();
             return null;
         }
-        public static async Task<T> FindFirstAsync<T>(params Condition[] conditions) where T : class
+        public async Task<T> FindFirstAsync<T>(params Condition[] conditions) where T : class
         {
             await CheckConnectAsync();
             TableAttribute table = typeof(T).GetCustomAttribute<TableAttribute>();
@@ -280,7 +291,7 @@ namespace SJK
             return null;
         }
         #endregion
-        private static Dictionary<KeyAttribute, FieldInfo> GetKeyValues(object record)
+        private Dictionary<KeyAttribute, FieldInfo> GetKeyValues(object record)
         {
             Dictionary<KeyAttribute, FieldInfo> result = new Dictionary<KeyAttribute, FieldInfo>();
             foreach(FieldInfo fieldInfo in record.GetType().GetFields())
@@ -293,7 +304,7 @@ namespace SJK
             }
             return result;
         }
-        private static Dictionary<PrimaryKeyAttribute, FieldInfo> GetPrimaryKeyValues(object record)
+        private Dictionary<PrimaryKeyAttribute, FieldInfo> GetPrimaryKeyValues(object record)
         {
             Dictionary<PrimaryKeyAttribute, FieldInfo> result = new Dictionary<PrimaryKeyAttribute, FieldInfo>();
             foreach (FieldInfo fieldInfo in record.GetType().GetFields())
